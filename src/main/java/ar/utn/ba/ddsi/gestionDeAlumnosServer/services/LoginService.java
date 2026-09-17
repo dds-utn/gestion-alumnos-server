@@ -12,49 +12,65 @@ import java.util.Optional;
 
 @Service
 public class LoginService {
-    
+
     private final UsuariosRepository usuariosRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-    
-    public LoginService(UsuariosRepository usuariosRepository) {
+    private final JwtUtil jwtUtil;
+
+    public LoginService(UsuariosRepository usuariosRepository, JwtUtil jwtUtil) {
         this.usuariosRepository = usuariosRepository;
+        this.jwtUtil = jwtUtil;
         this.passwordEncoder = new BCryptPasswordEncoder();
     }
-    
+
     public Usuario autenticarUsuario(String username, String password) {
         Optional<Usuario> usuarioOpt = usuariosRepository.findByNombreDeUsuario(username);
-        
+
         if (usuarioOpt.isEmpty()) {
             throw new NotFoundException("Usuario", username);
         }
-        
+
         Usuario usuario = usuarioOpt.get();
-        
+
         // Verificar la contraseña usando BCrypt
         if (!passwordEncoder.matches(password, usuario.getContrasenia())) {
             throw new NotFoundException("Usuario", username);
         }
-        
+
         return usuario;
     }
-    
-    public String generarAccessToken(String username) {
-        return JwtUtil.generarAccessToken(username);
+
+    public String generarAccessToken(Usuario usuario) {
+        return jwtUtil.generarAccessToken(usuario);
     }
-    
+
     public String generarRefreshToken(String username) {
-        return JwtUtil.generarRefreshToken(username);
+        return jwtUtil.generarRefreshToken(username);
     }
-    
-    public UserRolesPermissionsDTO obtenerRolesYPermisosUsuario(String username) {
+
+    /**
+     * Regenera el access token a partir del username validado en un refresh token,
+     * releyendo el usuario para que el rol y los permisos viajen siempre actualizados.
+     */
+    public String generarAccessTokenPorUsername(String username) {
         Optional<Usuario> usuarioOpt = usuariosRepository.findByNombreDeUsuario(username);
-        
+
         if (usuarioOpt.isEmpty()) {
             throw new NotFoundException("Usuario", username);
         }
-        
+
+        return jwtUtil.generarAccessToken(usuarioOpt.get());
+    }
+
+    public UserRolesPermissionsDTO obtenerRolesYPermisosUsuario(String username) {
+        Optional<Usuario> usuarioOpt = usuariosRepository.findByNombreDeUsuario(username);
+
+        if (usuarioOpt.isEmpty()) {
+            throw new NotFoundException("Usuario", username);
+        }
+
         Usuario usuario = usuarioOpt.get();
-        
+
         return UserRolesPermissionsDTO.builder()
                 .username(usuario.getNombreDeUsuario())
                 .rol(usuario.getRol())

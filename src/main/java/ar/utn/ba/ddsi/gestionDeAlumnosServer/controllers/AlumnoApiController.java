@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class AlumnoApiController {
     private final AlumnoService alumnoService;
 
     @GetMapping("/alumnos")
+    @PreAuthorize("hasAnyRole('DOCENTE', 'ADMIN')")
     public ResponseEntity<List<AlumnoDTO>> obtenerTodosLosAlumnos() {
         log.info("Obteniendo todos los alumnos");
         List<AlumnoDTO> alumnos = alumnoService.obtenerTodosLosAlumnos();
@@ -27,6 +29,7 @@ public class AlumnoApiController {
     }
 
     @GetMapping("/alumnos/{legajo}")
+    @PreAuthorize("hasAnyRole('DOCENTE', 'ADMIN')")
     public ResponseEntity<AlumnoDTO> obtenerAlumnoPorLegajo(@PathVariable String legajo) {
         try {
             log.info("Obteniendo al alumno {}", legajo);
@@ -42,6 +45,7 @@ public class AlumnoApiController {
     }
 
     @PostMapping("/alumnos")
+    @PreAuthorize("hasRole('ADMIN') and hasAnyAuthority('CREAR_ALUMNOS')")
     public ResponseEntity<AlumnoDTO> crearAlumno(@RequestBody AlumnoDTO alumnoDTO) {
         try {
             log.info("Creando al alumno {}", alumnoDTO);
@@ -54,6 +58,7 @@ public class AlumnoApiController {
     }
 
     @PutMapping("/alumnos/{legajo}")
+    @PreAuthorize("hasAuthority('EDITAR_ALUMNOS')")
     public ResponseEntity<AlumnoDTO> actualizarAlumno(@PathVariable String legajo,
                                                       @RequestBody AlumnoDTO alumnoDTO) {
         try {
@@ -70,6 +75,7 @@ public class AlumnoApiController {
     }
 
     @DeleteMapping("/alumnos/{legajo}")
+    @PreAuthorize("hasAuthority('ELIMINAR_ALUMNOS')")
     public ResponseEntity<Void> eliminarAlumno(@PathVariable String legajo) {
         try {
             log.info("Eliminando al alumno {}", legajo);
